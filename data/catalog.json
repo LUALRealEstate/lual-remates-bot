@@ -1,0 +1,93 @@
+[
+  {
+    "id": "TJ-ZR-01",
+    "ciudad": "Tijuana",
+    "zona": "Zona Río",
+    "tipo": "Departamento",
+    "recamaras": 3,
+    "banos": 2,
+    "m2": 128,
+    "valor_comercial": "$4.2M MXN",
+    "precio_oportunidad": "$2.55M MXN",
+    "descuento_estimado": "39%",
+    "resumen_corto_comercial": "Departamento amplio en Zona Río, ubicación patrimonial fuerte y descuento atractivo frente a valor comercial."
+  },
+  {
+    "id": "TJ-PT-01",
+    "ciudad": "Tijuana",
+    "zona": "Playas de Tijuana",
+    "tipo": "Casa",
+    "recamaras": 4,
+    "banos": 3.5,
+    "m2": 210,
+    "valor_comercial": "$5.6M MXN",
+    "precio_oportunidad": "$3.1M MXN",
+    "descuento_estimado": "45%",
+    "resumen_corto_comercial": "Casa con buen metraje en Playas de Tijuana, perfil mixto patrimonial e inversionista."
+  },
+  {
+    "id": "TJ-CA-01",
+    "ciudad": "Tijuana",
+    "zona": "Cacho",
+    "tipo": "Departamento",
+    "recamaras": 2,
+    "banos": 2,
+    "m2": 96,
+    "valor_comercial": "$3.7M MXN",
+    "precio_oportunidad": "$2.2M MXN",
+    "descuento_estimado": "41%",
+    "resumen_corto_comercial": "Opción compacta en Cacho con entrada más accesible y zona consolidada para resguardo patrimonial."
+  },
+  {
+    "id": "MX-NV-01",
+    "ciudad": "Ciudad de México",
+    "zona": "Narvarte",
+    "tipo": "Departamento",
+    "recamaras": 3,
+    "banos": 2,
+    "m2": 118,
+    "valor_comercial": "$5.8M MXN",
+    "precio_oportunidad": "$3.25M MXN",
+    "descuento_estimado": "44%",
+    "resumen_corto_comercial": "Departamento bien ubicado en Narvarte, oportunidad sólida para inversionista paciente."
+  },
+  {
+    "id": "MX-CY-01",
+    "ciudad": "Ciudad de México",
+    "zona": "Coyoacán",
+    "tipo": "Casa",
+    "recamaras": 4,
+    "banos": 3,
+    "m2": 240,
+    "valor_comercial": "$8.4M MXN",
+    "precio_oportunidad": "$4.95M MXN",
+    "descuento_estimado": "41%",
+    "resumen_corto_comercial": "Casa con vocación patrimonial en Coyoacán, adecuada para quien puede esperar proceso y prioriza ubicación."
+  },
+  {
+    "id": "MX-DV-01",
+    "ciudad": "Ciudad de México",
+    "zona": "Del Valle",
+    "tipo": "Departamento",
+    "recamaras": 2,
+    "banos": 2,
+    "m2": 104,
+    "valor_comercial": "$6.1M MXN",
+    "precio_oportunidad": "$3.45M MXN",
+    "descuento_estimado": "43%",
+    "resumen_corto_comercial": "Departamento en Del Valle con salida comercial clara y entrada por debajo del mercado."
+  },
+  {
+    "id": "MX-CM-01",
+    "ciudad": "Ciudad de México",
+    "zona": "Cuauhtémoc",
+    "tipo": "Departamento",
+    "recamaras": 2,
+    "banos": 1.5,
+    "m2": 88,
+    "valor_comercial": "$4.9M MXN",
+    "precio_oportunidad": "$2.85M MXN",
+    "descuento_estimado": "42%",
+    "resumen_corto_comercial": "Departamento en Cuauhtémoc para perfil inversionista que busca ubicación céntrica y spread atractivo."
+  }
+]

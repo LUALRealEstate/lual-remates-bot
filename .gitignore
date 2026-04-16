@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+.DS_Store
+artifacts/*.log
+artifacts/state/
+artifacts/live_api_calls.jsonl
+artifacts/openai_live_probe.json
