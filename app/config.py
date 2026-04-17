@@ -49,6 +49,11 @@ class Settings:
     whatsapp_outbound_url: str | None
     whatsapp_auth_token: str | None
     whatsapp_source_number: str | None
+    whatsapp_phone_number_id: str | None
+    whatsapp_access_token: str | None
+    whatsapp_verify_token: str | None
+    whatsapp_graph_api_version: str
+    whatsapp_graph_api_base_url: str
     whatsapp_dispatch_log_path: Path
     whatsapp_timeout_seconds: float
     state_storage_dir: Path
@@ -98,6 +103,14 @@ def get_settings(project_root: str | Path | None = None) -> Settings:
         whatsapp_outbound_url=os.environ.get("WHATSAPP_OUTBOUND_URL"),
         whatsapp_auth_token=os.environ.get("WHATSAPP_AUTH_TOKEN"),
         whatsapp_source_number=os.environ.get("WHATSAPP_SOURCE_NUMBER"),
+        whatsapp_phone_number_id=os.environ.get("WHATSAPP_PHONE_NUMBER_ID"),
+        whatsapp_access_token=os.environ.get("WHATSAPP_ACCESS_TOKEN"),
+        whatsapp_verify_token=os.environ.get("WHATSAPP_VERIFY_TOKEN"),
+        whatsapp_graph_api_version=os.environ.get("WHATSAPP_GRAPH_API_VERSION", "v23.0"),
+        whatsapp_graph_api_base_url=os.environ.get(
+            "WHATSAPP_GRAPH_API_BASE_URL",
+            "https://graph.facebook.com",
+        ).rstrip("/"),
         whatsapp_dispatch_log_path=(root / whatsapp_dispatch_log_path).resolve(),
         whatsapp_timeout_seconds=float(os.environ.get("WHATSAPP_TIMEOUT_SECONDS", "15")),
         state_storage_dir=(root / state_dir).resolve(),

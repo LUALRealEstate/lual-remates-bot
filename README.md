@@ -35,12 +35,17 @@ Usa `.env.example` como base.
 - `CLOSER_PHONE_NUMBER`: destino preparado para integración posterior.
 - `ADMIN_USER`: usuario administrativo de referencia.
 - `CLOSER_CONSOLE_LOG_PATH`: log local de notificaciones.
-- `WHATSAPP_MODE`: `stub` o `production`.
+- `WHATSAPP_MODE`: `stub`, `production` o `meta`.
 - `WHATSAPP_WEBHOOK_ENABLED`: referencia de modo webhook activo.
 - `WHATSAPP_OUTBOUND_ENABLED`: activa el envío saliente por HTTP.
 - `WHATSAPP_OUTBOUND_URL`: endpoint del runtime/proveedor saliente.
 - `WHATSAPP_AUTH_TOKEN`: token opcional para el POST saliente.
 - `WHATSAPP_SOURCE_NUMBER`: identificador del número origen.
+- `WHATSAPP_PHONE_NUMBER_ID`: ID del número de WhatsApp Cloud API.
+- `WHATSAPP_ACCESS_TOKEN`: token permanente de Meta Cloud API.
+- `WHATSAPP_VERIFY_TOKEN`: token usado por Meta para verificar el webhook.
+- `WHATSAPP_GRAPH_API_VERSION`: versión del Graph API, por defecto `v23.0`.
+- `WHATSAPP_GRAPH_API_BASE_URL`: override opcional para pruebas locales del transporte.
 - `WHATSAPP_TIMEOUT_SECONDS`: timeout del dispatch saliente.
 - `WHATSAPP_DISPATCH_LOG_PATH`: log local de dispatch/stub de WhatsApp.
 - `STATE_STORAGE_DIR`: carpeta de estado local.
@@ -68,6 +73,11 @@ Levantar un webhook simple local:
 cd "/Users/lualrealestate/lual bot v4/lual_remates_bot"
 python3 runtime_entrypoint.py serve --host 127.0.0.1 --port 8787
 ```
+
+Ruta de webhook para Meta Cloud API:
+
+- `GET /meta/webhook` para verificación.
+- `POST /meta/webhook` para mensajes entrantes.
 
 Payload esperado para `POST /whatsapp/incoming`:
 
@@ -113,9 +123,27 @@ Modo producción por webhook saliente:
 - `WHATSAPP_OUTBOUND_URL=https://tu-runtime-o-proveedor/outbound`
 - `WHATSAPP_AUTH_TOKEN=<TOKEN_SI_APLICA>`
 
+Modo Meta Cloud API:
+
+- `CLOSER_NOTIFICATION_METHOD=whatsapp`
+- `CLOSER_PHONE_NUMBER=<SET_ME>`
+- `WHATSAPP_MODE=meta`
+- `WHATSAPP_WEBHOOK_ENABLED=true`
+- `WHATSAPP_OUTBOUND_ENABLED=true`
+- `WHATSAPP_PHONE_NUMBER_ID=<META_PHONE_NUMBER_ID>`
+- `WHATSAPP_ACCESS_TOKEN=<META_PERMANENT_TOKEN>`
+- `WHATSAPP_VERIFY_TOKEN=<TOKEN_QUE_TAMBIEN_PONES_EN_META>`
+- `WHATSAPP_GRAPH_API_VERSION=v23.0`
+
+Para Railway, configura la URL del webhook como:
+
+- `https://TU-DOMINIO-RAILWAY/meta/webhook`
+
+La verificación de Meta llegará por GET con `hub.mode`, `hub.verify_token` y `hub.challenge`. El servidor devuelve el `hub.challenge` cuando el token coincide.
+
 ## Integración hacia producción
 
-1. Mantener `ConversationManager` como núcleo y conectar el webhook entrante a `runtime_entrypoint.py` o `WhatsAppAdapter`.
-2. Configurar `WHATSAPP_OUTBOUND_URL` para que el bot envíe respuestas y handoffs al runtime real.
-3. Guardar el estado por número de teléfono en un store persistente de producción.
-4. Reutilizar el resumen de `CloserHandoffService` para CRM, panel o canal interno.
+1. Mantener `ConversationManager` como núcleo y usar `runtime_entrypoint.py serve` como webhook Railway.
+2. En Meta, apuntar el webhook a `/meta/webhook` y suscribir eventos de mensajes.
+3. Configurar `WHATSAPP_MODE=meta` para que respuestas y handoff usen la misma integración de Graph API.
+4. Guardar el estado por número de teléfono en un store persistente de producción.

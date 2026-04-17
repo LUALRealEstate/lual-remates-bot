@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 from app.config import Settings
+from app.meta_cloud_api import MetaCloudAPIError, send_meta_text_message
 
 
 class WhatsAppDispatchError(RuntimeError):
@@ -43,7 +44,23 @@ class WhatsAppTransportClient:
             "metadata": metadata or {},
         }
 
-        if self.settings.whatsapp_outbound_enabled and self.settings.whatsapp_outbound_url:
+        if self.settings.whatsapp_mode == "meta" and self.settings.whatsapp_outbound_enabled:
+            try:
+                status_code, body = send_meta_text_message(
+                    settings=self.settings,
+                    to_phone=to_phone,
+                    message=message,
+                )
+            except MetaCloudAPIError as exc:
+                raise WhatsAppDispatchError(str(exc)) from exc
+            result = OutboundDispatchResult(
+                channel="whatsapp_meta",
+                target_phone=to_phone,
+                success=True,
+                status_code=status_code,
+                body_preview=body[:200],
+            )
+        elif self.settings.whatsapp_outbound_enabled and self.settings.whatsapp_outbound_url:
             headers = {"Content-Type": "application/json"}
             if self.settings.whatsapp_auth_token:
                 headers["Authorization"] = f"Bearer {self.settings.whatsapp_auth_token}"
