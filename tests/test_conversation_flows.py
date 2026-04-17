@@ -113,11 +113,17 @@ class ConversationFlowTests(unittest.TestCase):
         self.assertEqual(results[-1].state.stage, Stage.QUALIFICATION_CASH)
         self.assertEqual(results[-1].reply_text, "Estas oportunidades se manejan con recursos propios. ¿Es tu caso?")
 
-    def test_timeline_objection_resumes_flow(self) -> None:
+    def test_timeline_objection_is_brief_and_redirects_to_advisor(self) -> None:
         results = self.harness.run(["hola", "zona rio", "si", "si", "cuanto tiempo", "si"])
-        self.assertIn("Los tiempos pueden variar según cada propiedad.", results[-2].reply_text)
-        self.assertIn("¿Ese tipo de proceso se alinea con lo que estás buscando?", results[-2].reply_text)
-        self.assertEqual(results[-1].state.stage, Stage.QUALIFICATION_PRODUCT_UNDERSTANDING)
+        objection_reply = results[-2].reply_text.lower()
+        self.assertIn("los tiempos pueden variar según cada propiedad.", objection_reply)
+        self.assertIn("un asesor te puede explicar mejor el estimado", objection_reply)
+        self.assertIn("¿te parece bien?", objection_reply)
+        self.assertNotIn("regularización", objection_reply)
+        self.assertNotIn("se adquieren derechos", objection_reply)
+        self.assertLessEqual(results[-2].reply_text.count("."), 2)
+        self.assertEqual(results[-1].state.stage, Stage.PENDING_NAME)
+        self.assertEqual(results[-1].reply_text, "Perfecto. ¿Me compartes tu nombre?")
         self.assertEqual(results[-1].state.action_history.count("answer_timeline_objection"), 1)
 
     def test_financing_objection_resumes_cash_without_regression(self) -> None:
@@ -144,12 +150,25 @@ class ConversationFlowTests(unittest.TestCase):
         self.assertEqual(results[-1].state.stage, Stage.PENDING_NAME)
         self.assertNotIn("te conecto con un asesor", results[-1].reply_text.lower())
 
-    def test_process_question_answers_briefly_and_resumes_flow(self) -> None:
-        results = self.harness.run(["hola", "zona rio", "como es el proceso"])
+    def test_process_question_is_brief_and_redirects_to_advisor(self) -> None:
+        results = self.harness.run(["hola", "zona rio", "como es el proceso?"])
+        reply = results[-1].reply_text.lower()
         self.assertEqual(results[-1].state.stage, Stage.OBJECTION_HANDLING)
-        self.assertIn("no es una compra tradicional", results[-1].reply_text.lower())
-        self.assertIn("¿te funciona un esquema así?", results[-1].reply_text.lower())
-        self.assertNotIn("tj-zr-01", results[-1].reply_text.lower())
+        self.assertIn("es un proceso diferente al de una compra tradicional", reply)
+        self.assertIn("te conecto con un asesor", reply)
+        self.assertIn("¿te parece bien?", reply)
+        self.assertNotIn("regularización", reply)
+        self.assertNotIn("se adquieren derechos", reply)
+        self.assertLessEqual(results[-1].reply_text.count("."), 2)
+        self.assertNotIn("tj-zr-01", reply)
+
+    def test_process_question_acceptance_jumps_to_name_capture_without_reexplaining(self) -> None:
+        results = self.harness.run(["hola", "zona rio", "como funciona?", "si"])
+        objection_reply = results[-2].reply_text.lower()
+        self.assertIn("te conecto con un asesor", objection_reply)
+        self.assertNotIn("regularización", objection_reply)
+        self.assertEqual(results[-1].state.stage, Stage.PENDING_NAME)
+        self.assertEqual(results[-1].reply_text, "Perfecto. ¿Me compartes tu nombre?")
 
     def test_full_flow_uses_natural_commercial_copy_until_handoff(self) -> None:
         results = self.harness.run(

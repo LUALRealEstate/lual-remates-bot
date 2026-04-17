@@ -470,6 +470,9 @@ class StateMachine:
         resume_question = self._question_for_step(current_step)
         state.active_objection = objection
 
+        if self._should_redirect_objection_to_advisor(state, objection):
+            return self._advisor_redirect_objection_plan(state, objection)
+
         safe_answers = {
             "timeline": (
                 "Los tiempos pueden variar según cada propiedad. El asesor te puede dar información específica sobre el tiempo estimado en una llamada."
@@ -512,6 +515,49 @@ class StateMachine:
             stage=Stage.OBJECTION_HANDLING,
             pending_step=current_step,
             pending_question=resume_question,
+        )
+
+    def _should_redirect_objection_to_advisor(
+        self,
+        state: ConversationState,
+        objection: str,
+    ) -> bool:
+        if objection not in {"timeline", "how_it_works", "next_step"}:
+            return False
+        return state.property_active or state.stage in {
+            Stage.QUALIFICATION_CASH,
+            Stage.QUALIFICATION_TIMELINE,
+            Stage.QUALIFICATION_PRODUCT_UNDERSTANDING,
+            Stage.CONTACT_CAPTURE,
+        }
+
+    def _advisor_redirect_objection_plan(
+        self,
+        state: ConversationState,
+        objection: str,
+    ) -> ResponsePlan:
+        advisor_answers = {
+            "timeline": (
+                "Los tiempos pueden variar según cada propiedad. "
+                "Si quieres, un asesor te puede explicar mejor el estimado y el proceso completo en una llamada. "
+                "¿Te parece bien?"
+            ),
+            "how_it_works": (
+                "Es un proceso diferente al de una compra tradicional y no es entrega inmediata. "
+                "Si quieres, te conecto con un asesor para que te explique a detalle cómo funciona en una llamada. "
+                "¿Te parece bien?"
+            ),
+            "next_step": (
+                "Si quieres, te conecto con un asesor para que te explique a detalle cómo funciona y qué sigue en una llamada. "
+                "¿Te parece bien?"
+            ),
+        }
+        return self._plan(
+            action=f"answer_{objection}_objection",
+            message=advisor_answers[objection],
+            stage=Stage.OBJECTION_HANDLING,
+            pending_step="offer_advisor",
+            pending_question="¿Te conecto con un asesor?",
         )
 
     def _question_for_step(self, step: Optional[str]) -> Optional[str]:
