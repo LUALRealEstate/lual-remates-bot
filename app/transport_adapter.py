@@ -43,7 +43,8 @@ class WhatsAppAdapter:
             metadata=incoming.metadata,
         )
         outbound_result = None
-        if self.settings.whatsapp_outbound_enabled:
+        should_dispatch = self.settings.whatsapp_outbound_enabled or self.settings.whatsapp_mode == "meta"
+        if should_dispatch:
             outbound_result = self.outbound_client.send_text(
                 to_phone=incoming.phone_number,
                 message=bot_result.reply_text,

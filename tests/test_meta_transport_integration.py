@@ -127,7 +127,7 @@ class MetaTransportIntegrationTests(unittest.TestCase):
         self.assertEqual(body, "abc123")
 
     def test_meta_webhook_post_processes_inbound_message(self) -> None:
-        _, port = self._start_runtime()
+        _, port = self._start_runtime({"WHATSAPP_MODE": "stub"})
         payload = {
             "object": "whatsapp_business_account",
             "entry": [
@@ -184,7 +184,6 @@ class MetaTransportIntegrationTests(unittest.TestCase):
                     "CLOSER_NOTIFICATION_METHOD": "whatsapp",
                     "CLOSER_PHONE_NUMBER": "5216161249340",
                     "WHATSAPP_MODE": "meta",
-                    "WHATSAPP_OUTBOUND_ENABLED": "true",
                     "WHATSAPP_PHONE_NUMBER_ID": "1234567890",
                     "WHATSAPP_ACCESS_TOKEN": "meta-test-token",
                     "WHATSAPP_GRAPH_API_VERSION": "v99.0",

@@ -137,6 +137,22 @@ def serve_http(host: str, port: int, project_root: str | None = None) -> None:
                                 f"wa_id={inbound.phone_number}",
                                 flush=True,
                             )
+                        if result.outbound_result:
+                            print(
+                                "[meta_webhook] outbound_dispatch_completed "
+                                f"wa_id={inbound.phone_number} "
+                                f"channel={result.outbound_result.channel} "
+                                f"status={result.outbound_result.status_code}",
+                                flush=True,
+                            )
+                        else:
+                            print(
+                                "[meta_webhook] outbound_dispatch_missing "
+                                f"wa_id={inbound.phone_number} "
+                                f"mode={settings.whatsapp_mode} "
+                                f"outbound_enabled={settings.whatsapp_outbound_enabled}",
+                                flush=True,
+                            )
                         results.append(
                             {
                                 "phone_number": result.phone_number,

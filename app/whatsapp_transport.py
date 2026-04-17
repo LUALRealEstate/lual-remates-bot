@@ -44,7 +44,7 @@ class WhatsAppTransportClient:
             "metadata": metadata or {},
         }
 
-        if self.settings.whatsapp_mode == "meta" and self.settings.whatsapp_outbound_enabled:
+        if self.settings.whatsapp_mode == "meta":
             try:
                 status_code, body = send_meta_text_message(
                     settings=self.settings,
