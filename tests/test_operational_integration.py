@@ -62,7 +62,7 @@ class OperationalIntegrationTests(unittest.TestCase):
         result = self.harness.send_via_adapter("hola", {"source": "webhook"})
         self.assertEqual(result.phone_number, self.harness.phone)
         self.assertEqual(result.state["stage"], "discovery")
-        self.assertIn("¿Qué ciudad o zona te interesa?", result.reply_text)
+        self.assertEqual(result.reply_text, "¡Hola! Bienvenido a LUAL Real Estate. ¿En qué puedo ayudarte?")
         self.assertIsNone(result.handoff_summary)
 
     def test_runtime_entrypoint_message_mode_returns_json(self) -> None:
@@ -91,7 +91,7 @@ class OperationalIntegrationTests(unittest.TestCase):
         )
         payload = json.loads(completed.stdout)
         self.assertEqual(payload["state"]["stage"], "discovery")
-        self.assertIn("¿Qué ciudad o zona te interesa?", payload["reply_text"])
+        self.assertEqual(payload["reply_text"], "¡Hola! Bienvenido a LUAL Real Estate. ¿En qué puedo ayudarte?")
 
     def test_console_handoff_generates_clean_summary(self) -> None:
         self.harness.run(

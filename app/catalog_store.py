@@ -103,6 +103,33 @@ class CatalogStore:
             return [item for item in zones if item != zone][:3]
         return ["Tijuana", "Ciudad de México"]
 
+    def public_property_pitch(self, item: PropertyRecord, *, include_question: bool = True) -> str:
+        message = (
+            f"Tenemos un {item.tipo.lower()} disponible en {item.zona}, {item.ciudad}. "
+            f"Cuenta con {item.recamaras} recámaras, {self._format_bathrooms(item.banos)} y {item.m2}m². "
+            f"El valor comercial es de {item.valor_comercial}, pero lo ofrecemos en {item.precio_oportunidad}, "
+            f"lo que representa un {item.descuento_estimado} de descuento."
+        )
+        if include_question:
+            message += " ¿Te gustaría saber más sobre esta oportunidad?"
+        return message
+
+    def city_catalog_pitch(self, city: str) -> str:
+        zones = self.city_zones_with_inventory(city)
+        zones_text = self._human_join(zones[:4])
+        return f"Claro, en {city} tenemos opciones en {zones_text}. ¿Hay alguna zona que te interese?"
+
+    def no_inventory_pitch(self, city: str | None, zone: str | None) -> str:
+        alternatives = self.alternatives_for(city, zone)
+        alternatives_text = self._human_join(alternatives)
+        if zone:
+            return (
+                f"Actualmente no tenemos propiedades disponibles en {zone}, "
+                f"pero sí puedo mostrarte opciones en {alternatives_text}. "
+                "¿Cuál te interesa?"
+            )
+        return f"Ahorita no tengo inventario exacto en esa búsqueda, pero sí en {alternatives_text}. ¿Cuál te interesa?"
+
     def summarize_property(self, item: PropertyRecord) -> str:
         return (
             f"{item.id}: {item.tipo} en {item.zona}, {item.recamaras} rec, "
@@ -121,3 +148,18 @@ class CatalogStore:
         if not item:
             return None
         return asdict(item)
+
+    def _format_bathrooms(self, banos: float) -> str:
+        if float(banos).is_integer():
+            return f"{int(banos)} baños"
+        return f"{banos} baños"
+
+    def _human_join(self, values: Iterable[str]) -> str:
+        items = list(values)
+        if not items:
+            return ""
+        if len(items) == 1:
+            return items[0]
+        if len(items) == 2:
+            return f"{items[0]} y {items[1]}"
+        return ", ".join(items[:-1]) + f" y {items[-1]}"

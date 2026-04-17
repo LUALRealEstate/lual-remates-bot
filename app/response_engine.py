@@ -8,7 +8,7 @@ class ResponseEngine:
 
     def render(self, state: ConversationState, plan: ResponsePlan) -> str:
         body = " ".join(plan.message.split())
-        if not state.greeted and plan.action != "post_handoff_ack":
+        if not state.greeted and plan.action == "greeting":
             if body:
                 return f"{self.CANONICAL_GREETING} {body}"
             return self.CANONICAL_GREETING

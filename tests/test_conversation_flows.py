@@ -19,12 +19,14 @@ class ConversationFlowTests(unittest.TestCase):
 
     def test_greeting_and_discovery(self) -> None:
         result = self.harness.send("hola")
-        self.assertIn("¡Hola! Bienvenido a LUAL Real Estate. ¿En qué puedo ayudarte?", result.reply_text)
+        self.assertEqual(result.reply_text, "¡Hola! Bienvenido a LUAL Real Estate. ¿En qué puedo ayudarte?")
         self.assertEqual(result.state.stage, Stage.DISCOVERY)
 
     def test_catalog_by_city(self) -> None:
         results = self.harness.run(["hola", "tijuana"])
-        self.assertIn("TJ-ZR-01", results[-1].reply_text)
+        self.assertIn("Zona Río", results[-1].reply_text)
+        self.assertIn("Playas de Tijuana", results[-1].reply_text)
+        self.assertNotIn("TJ-ZR-01", results[-1].reply_text)
         self.assertEqual(results[-1].state.stage, Stage.CATALOG)
 
     def test_selection_by_zone_sets_property_active(self) -> None:
@@ -33,6 +35,8 @@ class ConversationFlowTests(unittest.TestCase):
         self.assertTrue(state.property_active)
         self.assertEqual(state.selected_property_id, "TJ-ZR-01")
         self.assertEqual(state.stage, Stage.PROPERTY_ACTIVE)
+        self.assertIn("Tenemos un departamento disponible en Zona Río, Tijuana.", results[-1].reply_text)
+        self.assertNotIn("TJ-ZR-01", results[-1].reply_text)
 
     def test_no_match_then_city_alternative_stays_in_catalog(self) -> None:
         results = self.harness.run(["hola", "villafontana", "cdmx"])
@@ -48,12 +52,14 @@ class ConversationFlowTests(unittest.TestCase):
         self.assertTrue(state.property_active)
         self.assertEqual(state.stage, Stage.PROPERTY_ACTIVE)
 
-    def test_concrete_property_interest_moves_to_cash(self) -> None:
+    def test_concrete_property_interest_shows_property_without_catalog_dump(self) -> None:
         results = self.harness.run(["hola", "me interesa el de zona rio"])
         state = results[-1].state
-        self.assertEqual(state.stage, Stage.QUALIFICATION_CASH)
+        self.assertEqual(state.stage, Stage.PROPERTY_ACTIVE)
         self.assertTrue(state.property_active)
         self.assertEqual(state.selected_property_id, "TJ-ZR-01")
+        self.assertIn("Tenemos un departamento disponible en Zona Río, Tijuana.", results[-1].reply_text)
+        self.assertNotIn("TJ-ZR-01", results[-1].reply_text)
 
     def test_affirmation_after_property_active_advances_to_cash(self) -> None:
         results = self.harness.run(["hola", "zona rio", "si"])
@@ -75,7 +81,7 @@ class ConversationFlowTests(unittest.TestCase):
     def test_first_time_objection_does_not_break_property_flow(self) -> None:
         results = self.harness.run(["hola", "zona rio", "es mi primera vez"])
         self.assertEqual(results[-1].state.stage, Stage.OBJECTION_HANDLING)
-        self.assertIn("lo importante es ubicar una opción", results[-1].reply_text.lower())
+        self.assertIn("te lo explico paso a paso", results[-1].reply_text.lower())
 
     def test_fast_advisor_acceptance_skips_reconfirmation(self) -> None:
         results = self.harness.run(
@@ -89,6 +95,40 @@ class ConversationFlowTests(unittest.TestCase):
         )
         self.assertEqual(results[-1].state.stage, Stage.PENDING_NAME)
         self.assertNotIn("te conecto con un asesor", results[-1].reply_text.lower())
+
+    def test_process_question_answers_briefly_and_resumes_flow(self) -> None:
+        results = self.harness.run(["hola", "zona rio", "como es el proceso"])
+        self.assertEqual(results[-1].state.stage, Stage.OBJECTION_HANDLING)
+        self.assertIn("no es una compra tradicional", results[-1].reply_text.lower())
+        self.assertIn("¿te interesa esta opción?", results[-1].reply_text.lower())
+        self.assertNotIn("tj-zr-01", results[-1].reply_text.lower())
+
+    def test_full_flow_uses_natural_commercial_copy_until_handoff(self) -> None:
+        results = self.harness.run(
+            [
+                "hola",
+                "quiero ver propiedades",
+                "zona rio",
+                "si",
+                "si",
+                "si",
+                "si",
+                "Omar",
+                "4pm",
+            ]
+        )
+        self.assertEqual(results[0].reply_text, "¡Hola! Bienvenido a LUAL Real Estate. ¿En qué puedo ayudarte?")
+        self.assertEqual(
+            results[1].reply_text,
+            "Claro, tenemos opciones en Tijuana y CDMX. ¿Hay alguna zona o tipo de propiedad que te interese?",
+        )
+        self.assertIn("Tenemos un departamento disponible en Zona Río, Tijuana.", results[2].reply_text)
+        self.assertIn("recursos propios", results[3].reply_text.lower())
+        self.assertIn("no son de entrega inmediata", results[4].reply_text.lower())
+        self.assertIn("se adquieren derechos", results[5].reply_text.lower())
+        self.assertIn("te conecto con un asesor", results[6].reply_text.lower())
+        self.assertEqual(results[7].reply_text, "Gracias. ¿Qué horario te funciona para la llamada?")
+        self.assertIn("ya dejé tu solicitud", results[8].reply_text.lower())
 
     def test_message_after_handoff_stays_closed(self) -> None:
         results = self.harness.run(

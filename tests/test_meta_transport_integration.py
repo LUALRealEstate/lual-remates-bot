@@ -169,7 +169,10 @@ class MetaTransportIntegrationTests(unittest.TestCase):
         self.assertEqual(body["processed_messages"], 1)
         self.assertEqual(body["results"][0]["phone_number"], "5216641234567")
         self.assertEqual(body["results"][0]["state"]["stage"], "discovery")
-        self.assertIn("¿Qué ciudad o zona te interesa?", body["results"][0]["reply_text"])
+        self.assertEqual(
+            body["results"][0]["reply_text"],
+            "¡Hola! Bienvenido a LUAL Real Estate. ¿En qué puedo ayudarte?",
+        )
 
     def test_meta_outbound_and_handoff_use_graph_api_transport(self) -> None:
         _MetaCaptureHandler.received_requests = []
