@@ -7,12 +7,15 @@ from typing import Protocol
 
 from app.config import Settings
 from app.state_schema import ConversationState
+from app.whatsapp_transport import WhatsAppTransportClient
 
 
 @dataclass
 class LeadSummary:
     name: str
     phone_number: str
+    city: str
+    zone: str
     city_or_zone: str
     property_reference: str
     customer_profile: str
@@ -28,6 +31,8 @@ class LeadSummary:
         return {
             "name": self.name,
             "phone_number": self.phone_number,
+            "city": self.city,
+            "zone": self.zone,
             "city_or_zone": self.city_or_zone,
             "property_reference": self.property_reference,
             "customer_profile": self.customer_profile,
@@ -39,6 +44,25 @@ class LeadSummary:
             "transcript_summary": self.transcript_summary,
             "ready_reason": self.ready_reason,
         }
+
+    def to_text(self) -> str:
+        objections = ", ".join(self.objections) if self.objections else "sin objeciones fuertes"
+        return (
+            "Lead listo para closer LUAL\n"
+            f"Nombre: {self.name}\n"
+            f"Teléfono: {self.phone_number}\n"
+            f"Ciudad: {self.city}\n"
+            f"Zona: {self.zone}\n"
+            f"Propiedad activa: {self.property_reference}\n"
+            f"Perfil: {self.customer_profile}\n"
+            f"Contado: {self.has_cash}\n"
+            f"Acepta proceso: {self.accepts_timeline}\n"
+            f"Entiende producto: {self.understands_product}\n"
+            f"Objeciones: {objections}\n"
+            f"Horario preferido: {self.appointment_preference}\n"
+            f"Resumen: {self.transcript_summary}\n"
+            f"Motivo handoff: {self.ready_reason}"
+        )
 
 
 class Notifier(Protocol):
@@ -57,29 +81,49 @@ class ConsoleNotifier:
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
-class WhatsAppNotifierStub:
-    def __init__(self, log_path: Path, target_phone: str | None) -> None:
+class DisabledNotifier:
+    def notify(self, summary: LeadSummary) -> None:
+        _ = summary
+
+
+class WhatsAppCloserNotifier:
+    def __init__(self, log_path: Path, target_phone: str | None, transport: WhatsAppTransportClient) -> None:
         self.log_path = log_path
         self.target_phone = target_phone
+        self.transport = transport
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
 
     def notify(self, summary: LeadSummary) -> None:
         payload = {
-            "channel": "whatsapp_stub",
+            "channel": "whatsapp",
             "target_phone": self.target_phone,
             **summary.to_dict(),
         }
         with self.log_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        if self.target_phone:
+            self.transport.send_text(
+                to_phone=self.target_phone,
+                message=summary.to_text(),
+                metadata={
+                    "direction": "closer_notification",
+                    "lead_phone_number": summary.phone_number,
+                    "target_phone": self.target_phone,
+                },
+            )
 
 
 class CloserHandoffService:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        if self.settings.closer_notification_method == "whatsapp":
-            self.notifier: Notifier = WhatsAppNotifierStub(
+        transport = WhatsAppTransportClient(settings)
+        if not self.settings.closer_notification_enabled:
+            self.notifier = DisabledNotifier()
+        elif self.settings.closer_notification_method == "whatsapp":
+            self.notifier = WhatsAppCloserNotifier(
                 log_path=self.settings.closer_console_log_path,
                 target_phone=self.settings.closer_phone_number,
+                transport=transport,
             )
         else:
             self.notifier = ConsoleNotifier(log_path=self.settings.closer_console_log_path)
@@ -98,6 +142,8 @@ class CloserHandoffService:
         return LeadSummary(
             name=state.name or "Sin nombre",
             phone_number=state.phone_number,
+            city=state.city_interest or "Sin ciudad",
+            zone=state.zone_interest or "Sin zona",
             city_or_zone=city_or_zone,
             property_reference=property_reference,
             customer_profile=state.customer_profile.value,

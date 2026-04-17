@@ -39,9 +39,18 @@ class Settings:
     enable_llm_assist: bool
     openai_turn_understanding_enabled: bool
     closer_notification_method: str
+    closer_notification_enabled: bool
     closer_phone_number: str | None
     admin_user: str | None
     closer_console_log_path: Path
+    whatsapp_mode: str
+    whatsapp_webhook_enabled: bool
+    whatsapp_outbound_enabled: bool
+    whatsapp_outbound_url: str | None
+    whatsapp_auth_token: str | None
+    whatsapp_source_number: str | None
+    whatsapp_dispatch_log_path: Path
+    whatsapp_timeout_seconds: float
     state_storage_dir: Path
     live_api_log_path: Path
 
@@ -57,6 +66,9 @@ def get_settings(project_root: str | Path | None = None) -> Settings:
     closer_log_path = Path(
         os.environ.get("CLOSER_CONSOLE_LOG_PATH", "artifacts/closer_notifications.log")
     )
+    whatsapp_dispatch_log_path = Path(
+        os.environ.get("WHATSAPP_DISPATCH_LOG_PATH", "artifacts/whatsapp_dispatch.log")
+    )
     state_dir = Path(os.environ.get("STATE_STORAGE_DIR", "artifacts/state"))
     live_log_path = Path(os.environ.get("LIVE_API_LOG_PATH", "artifacts/live_api_calls.jsonl"))
 
@@ -70,9 +82,24 @@ def get_settings(project_root: str | Path | None = None) -> Settings:
             os.environ.get("OPENAI_TURN_UNDERSTANDING_ENABLED"), True
         ),
         closer_notification_method=os.environ.get("CLOSER_NOTIFICATION_METHOD", "console").strip().lower(),
+        closer_notification_enabled=_parse_bool(
+            os.environ.get("CLOSER_NOTIFICATION_ENABLED"), True
+        ),
         closer_phone_number=os.environ.get("CLOSER_PHONE_NUMBER"),
         admin_user=os.environ.get("ADMIN_USER"),
         closer_console_log_path=(root / closer_log_path).resolve(),
+        whatsapp_mode=os.environ.get("WHATSAPP_MODE", "stub").strip().lower(),
+        whatsapp_webhook_enabled=_parse_bool(
+            os.environ.get("WHATSAPP_WEBHOOK_ENABLED"), False
+        ),
+        whatsapp_outbound_enabled=_parse_bool(
+            os.environ.get("WHATSAPP_OUTBOUND_ENABLED"), False
+        ),
+        whatsapp_outbound_url=os.environ.get("WHATSAPP_OUTBOUND_URL"),
+        whatsapp_auth_token=os.environ.get("WHATSAPP_AUTH_TOKEN"),
+        whatsapp_source_number=os.environ.get("WHATSAPP_SOURCE_NUMBER"),
+        whatsapp_dispatch_log_path=(root / whatsapp_dispatch_log_path).resolve(),
+        whatsapp_timeout_seconds=float(os.environ.get("WHATSAPP_TIMEOUT_SECONDS", "15")),
         state_storage_dir=(root / state_dir).resolve(),
         live_api_log_path=(root / live_log_path).resolve(),
     )

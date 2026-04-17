@@ -40,7 +40,13 @@ class ConversationManager:
         self.response_engine = response_engine
         self.closer_handoff = closer_handoff
 
-    def handle_message(self, phone_number: str, text: str) -> BotResult:
+    def handle_message(
+        self,
+        phone_number: str,
+        text: str,
+        metadata: dict | None = None,
+    ) -> BotResult:
+        _ = metadata
         state = self.state_store.load(phone_number)
         state.push_message("user", text)
 

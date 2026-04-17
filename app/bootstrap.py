@@ -8,6 +8,7 @@ from app.llm_client import NullLLMClient, OpenAIResponsesClient
 from app.response_engine import ResponseEngine
 from app.state_machine import StateMachine
 from app.state_store import StateStore
+from app.transport_adapter import WhatsAppAdapter
 from app.turn_understanding import TurnUnderstanding
 
 
@@ -38,3 +39,9 @@ def build_manager(project_root: str | None = None) -> ConversationManager:
 def get_live_client(project_root: str | None = None) -> OpenAIResponsesClient:
     settings = get_settings(project_root)
     return OpenAIResponsesClient(settings)
+
+
+def build_whatsapp_adapter(project_root: str | None = None) -> WhatsAppAdapter:
+    settings = get_settings(project_root)
+    manager = build_manager(project_root)
+    return WhatsAppAdapter(manager=manager, settings=settings)
