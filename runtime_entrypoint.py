@@ -42,6 +42,24 @@ def handle_single_message(
     return payload
 
 
+def _meta_payload_signal_counts(payload: dict) -> tuple[int, int]:
+    messages_count = 0
+    statuses_count = 0
+    for entry in payload.get("entry", []):
+        for change in entry.get("changes", []):
+            value = change.get("value", {})
+            messages_count += len(value.get("messages", []))
+            statuses_count += len(value.get("statuses", []))
+    return messages_count, statuses_count
+
+
+def _preview_for_log(text: str | None, limit: int = 160) -> str:
+    cleaned = (text or "").replace("\n", " ").strip()
+    if len(cleaned) <= limit:
+        return cleaned
+    return cleaned[: limit - 3] + "..."
+
+
 def serve_http(host: str, port: int, project_root: str | None = None) -> None:
     adapter = build_whatsapp_adapter(project_root)
     settings = adapter.settings
@@ -79,9 +97,26 @@ def serve_http(host: str, port: int, project_root: str | None = None) -> None:
             try:
                 payload = json.loads(raw_body or "{}")
                 if path == META_WEBHOOK_PATH:
+                    messages_count, statuses_count = _meta_payload_signal_counts(payload)
+                    print(
+                        "[meta_webhook] payload_received "
+                        f"messages={messages_count} statuses={statuses_count}",
+                        flush=True,
+                    )
                     results = []
                     inbound_messages = extract_meta_inbound_messages(payload)
+                    if not inbound_messages:
+                        print(
+                            "[meta_webhook] no_inbound_messages_detected "
+                            f"messages={messages_count} statuses={statuses_count}",
+                            flush=True,
+                        )
                     for inbound in inbound_messages:
+                        print(
+                            "[meta_webhook] inbound_detected "
+                            f"wa_id={inbound.phone_number} text='{_preview_for_log(inbound.text)}'",
+                            flush=True,
+                        )
                         result = adapter.process_incoming(
                             IncomingMessage(
                                 phone_number=inbound.phone_number,
@@ -89,6 +124,19 @@ def serve_http(host: str, port: int, project_root: str | None = None) -> None:
                                 metadata=inbound.metadata,
                             )
                         )
+                        if result.reply_text:
+                            print(
+                                "[meta_webhook] bot_response_generated "
+                                f"wa_id={inbound.phone_number} "
+                                f"text='{_preview_for_log(result.reply_text)}'",
+                                flush=True,
+                            )
+                        else:
+                            print(
+                                "[meta_webhook] bot_response_missing "
+                                f"wa_id={inbound.phone_number}",
+                                flush=True,
+                            )
                         results.append(
                             {
                                 "phone_number": result.phone_number,

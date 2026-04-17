@@ -25,6 +25,13 @@ class MetaInboundMessage:
     metadata: Dict[str, Any]
 
 
+def _log_preview(text: str, limit: int = 160) -> str:
+    cleaned = text.replace("\n", " ").strip()
+    if len(cleaned) <= limit:
+        return cleaned
+    return cleaned[: limit - 3] + "..."
+
+
 def is_meta_webhook_verification(path: str) -> bool:
     return urlparse(path).path == META_WEBHOOK_PATH
 
@@ -140,6 +147,11 @@ def send_meta_text_message(
             "body": message,
         },
     }
+    print(
+        "[meta_graph] send_attempt "
+        f"to={payload['to']} url={url} text='{_log_preview(message)}'",
+        flush=True,
+    )
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
@@ -155,9 +167,24 @@ def send_meta_text_message(
             timeout=settings.whatsapp_timeout_seconds,
         ) as response:
             body = response.read().decode("utf-8", errors="replace")
+            print(
+                "[meta_graph] send_success "
+                f"to={payload['to']} status={response.status} body='{_log_preview(body)}'",
+                flush=True,
+            )
             return response.status, body
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
+        print(
+            "[meta_graph] send_error "
+            f"to={payload['to']} status={exc.code} body='{_log_preview(body)}'",
+            flush=True,
+        )
         raise MetaCloudAPIError(f"Meta Cloud API HTTP {exc.code}: {body}") from exc
     except urllib.error.URLError as exc:
+        print(
+            "[meta_graph] send_error "
+            f"to={payload['to']} status=connection_error body='{_log_preview(str(exc))}'",
+            flush=True,
+        )
         raise MetaCloudAPIError(f"Meta Cloud API connection error: {exc}") from exc
