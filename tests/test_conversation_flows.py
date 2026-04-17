@@ -22,6 +22,46 @@ class ConversationFlowTests(unittest.TestCase):
         self.assertEqual(result.reply_text, "¡Hola! Bienvenido a LUAL Real Estate. ¿En qué puedo ayudarte?")
         self.assertEqual(result.state.stage, Stage.DISCOVERY)
 
+    def test_catalog_intent_quiero_ver_propiedades_uses_strict_copy(self) -> None:
+        result = self.harness.run(["hola", "quiero ver propiedades"])[-1]
+        self.assertEqual(
+            result.reply_text,
+            "Claro, con gusto te muestro lo que hay disponible. ¿En qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
+        )
+        self.assertNotIn("asesor", result.reply_text.lower())
+        self.assertNotIn("avanzar", result.reply_text.lower())
+        self.assertNotIn("siguiente paso", result.reply_text.lower())
+
+    def test_catalog_intent_quiero_ver_las_propiedades_disponibles_uses_strict_copy(self) -> None:
+        result = self.harness.run(["hola", "quiero ver las propiedades disponibles"])[-1]
+        self.assertEqual(
+            result.reply_text,
+            "Claro, con gusto te muestro lo que hay disponible. ¿En qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
+        )
+        self.assertNotIn("asesor", result.reply_text.lower())
+        self.assertNotIn("avanzar", result.reply_text.lower())
+        self.assertNotIn("siguiente paso", result.reply_text.lower())
+
+    def test_catalog_intent_me_gustaria_ver_su_catalogo_uses_strict_copy(self) -> None:
+        result = self.harness.run(["hola", "me gustaría ver su catálogo"])[-1]
+        self.assertEqual(
+            result.reply_text,
+            "Claro, con gusto te muestro lo que hay disponible. ¿En qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
+        )
+        self.assertNotIn("asesor", result.reply_text.lower())
+        self.assertNotIn("avanzar", result.reply_text.lower())
+        self.assertNotIn("siguiente paso", result.reply_text.lower())
+
+    def test_catalog_intent_quiero_informes_uses_strict_copy(self) -> None:
+        result = self.harness.run(["hola", "quiero informes"])[-1]
+        self.assertEqual(
+            result.reply_text,
+            "Claro, con gusto te muestro lo que hay disponible. ¿En qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
+        )
+        self.assertNotIn("asesor", result.reply_text.lower())
+        self.assertNotIn("avanzar", result.reply_text.lower())
+        self.assertNotIn("siguiente paso", result.reply_text.lower())
+
     def test_catalog_by_city(self) -> None:
         results = self.harness.run(["hola", "tijuana"])
         self.assertIn("Perfecto, aquí tienes algunas opciones en Tijuana:", results[-1].reply_text)
@@ -128,7 +168,7 @@ class ConversationFlowTests(unittest.TestCase):
         self.assertEqual(results[0].reply_text, "¡Hola! Bienvenido a LUAL Real Estate. ¿En qué puedo ayudarte?")
         self.assertEqual(
             results[1].reply_text,
-            "Claro, ¿en qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
+            "Claro, con gusto te muestro lo que hay disponible. ¿En qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
         )
         self.assertIn("Excelente elección.", results[2].reply_text)
         self.assertEqual(results[3].reply_text, "Estas oportunidades se manejan con recursos propios. ¿Es tu caso?")

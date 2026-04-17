@@ -26,11 +26,22 @@ class StateMachine:
         if signals.requested_advisor and not state.handoff_done:
             state.advisor_request_pending = True
 
+        catalog_intent_without_location = (
+            (signals.wants_catalog or signals.wants_info)
+            and not signals.city
+            and not signals.zone
+            and not signals.selected_property_id
+            and not state.property_active
+        )
+
         if state.stage == Stage.HANDED_OFF:
             return self._post_handoff_plan()
 
         if signals.explicit_search_change and (signals.city or signals.zone):
             self._reset_search_context(state)
+
+        if catalog_intent_without_location:
+            return self._catalog_discovery_plan()
 
         if state.stage == Stage.OBJECTION_HANDLING and not signals.objection:
             state.stage = self._stage_from_pending_step(state.pending_step) or state.stage
@@ -52,13 +63,7 @@ class StateMachine:
 
         if state.stage == Stage.OPENING:
             if signals.wants_catalog or signals.wants_info or signals.requested_advisor:
-                return self._plan(
-                    action="greeting_catalog",
-                    message="Claro, ¿en qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
-                    stage=Stage.DISCOVERY,
-                    pending_step="discover_location",
-                    pending_question="¿En qué ciudad estás interesado?",
-                )
+                return self._catalog_discovery_plan()
             return self._plan(
                 action="greeting",
                 message="",
@@ -68,13 +73,7 @@ class StateMachine:
             )
 
         if state.stage in {Stage.DISCOVERY, Stage.CATALOG, Stage.NO_MATCH, Stage.ALTERNATIVE_DISCOVERY}:
-            return self._plan(
-                action="ask_location",
-                message="Claro, ¿en qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
-                stage=Stage.DISCOVERY,
-                pending_step="discover_location",
-                pending_question="¿En qué ciudad estás interesado?",
-            )
+            return self._catalog_discovery_plan()
 
         if state.stage == Stage.PROPERTY_ACTIVE:
             if signals.cash_signal != TriState.UNKNOWN:
@@ -183,6 +182,15 @@ class StateMachine:
                 pending_question="¿Qué zona te interesa?",
             )
         return None
+
+    def _catalog_discovery_plan(self) -> ResponsePlan:
+        return self._plan(
+            action="greeting_catalog",
+            message="Claro, con gusto te muestro lo que hay disponible. ¿En qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
+            stage=Stage.DISCOVERY,
+            pending_step="discover_location",
+            pending_question="¿En qué ciudad estás interesado?",
+        )
 
     def _show_property_plan(self, state: ConversationState) -> ResponsePlan:
         property_item = self.catalog_store.find_by_id(state.selected_property_id)

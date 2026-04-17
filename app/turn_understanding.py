@@ -316,6 +316,10 @@ class TurnUnderstanding:
         if len(signals.normalized_text) < 12:
             return False
         deterministic_hits = [
+            signals.wants_catalog,
+            signals.wants_info,
+            signals.asks_next_step,
+            signals.mentions_property_interest,
             signals.city,
             signals.zone,
             signals.selected_property_id,
