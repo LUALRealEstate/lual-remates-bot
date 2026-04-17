@@ -1,29 +1,29 @@
 [
   {
-    "id": "TJ-ZR-01",
-    "ciudad": "Tijuana",
-    "zona": "Zona Río",
-    "tipo": "Departamento",
-    "recamaras": 3,
-    "banos": 2,
-    "m2": 128,
-    "valor_comercial": "$4.2M MXN",
-    "precio_oportunidad": "$2.55M MXN",
-    "descuento_estimado": "39%",
-    "resumen_corto_comercial": "Departamento amplio en Zona Río, ubicación patrimonial fuerte y descuento atractivo frente a valor comercial."
-  },
-  {
     "id": "TJ-PT-01",
     "ciudad": "Tijuana",
     "zona": "Playas de Tijuana",
     "tipo": "Casa",
-    "recamaras": 4,
-    "banos": 3.5,
-    "m2": 210,
-    "valor_comercial": "$5.6M MXN",
-    "precio_oportunidad": "$3.1M MXN",
-    "descuento_estimado": "45%",
-    "resumen_corto_comercial": "Casa con buen metraje en Playas de Tijuana, perfil mixto patrimonial e inversionista."
+    "recamaras": 3,
+    "banos": 2,
+    "m2": 180,
+    "valor_comercial": "$2.8M",
+    "precio_oportunidad": "$980K",
+    "descuento_estimado": "65%",
+    "resumen_corto_comercial": "Casa con buen tamaño en Playas de Tijuana, atractiva para quien busca descuento fuerte en una zona reconocida."
+  },
+  {
+    "id": "TJ-ZR-01",
+    "ciudad": "Tijuana",
+    "zona": "Zona Río",
+    "tipo": "Departamento",
+    "recamaras": 2,
+    "banos": 1,
+    "m2": 95,
+    "valor_comercial": "$1.7M",
+    "precio_oportunidad": "$550K",
+    "descuento_estimado": "68%",
+    "resumen_corto_comercial": "Departamento en Zona Río con entrada accesible y muy buen descuento frente a valor comercial."
   },
   {
     "id": "TJ-CA-01",

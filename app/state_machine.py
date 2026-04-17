@@ -54,10 +54,10 @@ class StateMachine:
             if signals.wants_catalog or signals.wants_info or signals.requested_advisor:
                 return self._plan(
                     action="greeting_catalog",
-                    message="Claro, tenemos opciones en Tijuana y CDMX. ¿Hay alguna zona o tipo de propiedad que te interese?",
+                    message="Claro, ¿en qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
                     stage=Stage.DISCOVERY,
                     pending_step="discover_location",
-                    pending_question="¿Hay alguna zona o tipo de propiedad que te interese?",
+                    pending_question="¿En qué ciudad estás interesado?",
                 )
             return self._plan(
                 action="greeting",
@@ -70,10 +70,10 @@ class StateMachine:
         if state.stage in {Stage.DISCOVERY, Stage.CATALOG, Stage.NO_MATCH, Stage.ALTERNATIVE_DISCOVERY}:
             return self._plan(
                 action="ask_location",
-                message="Claro, tenemos opciones en Tijuana y CDMX. ¿Hay alguna zona o tipo de propiedad que te interese?",
+                message="Claro, ¿en qué ciudad estás interesado? Tenemos opciones en Tijuana y CDMX.",
                 stage=Stage.DISCOVERY,
                 pending_step="discover_location",
-                pending_question="¿Hay alguna zona o tipo de propiedad que te interese?",
+                pending_question="¿En qué ciudad estás interesado?",
             )
 
         if state.stage == Stage.PROPERTY_ACTIVE:
@@ -92,10 +92,10 @@ class StateMachine:
                 )
             return self._plan(
                 action="reconfirm_property_interest",
-                message="Si esta opción te interesa, revisamos rápido si hace fit contigo.",
+                message="¿Te gustaría saber más sobre esta propiedad?",
                 stage=Stage.PROPERTY_ACTIVE,
                 pending_step="confirm_property_interest",
-                pending_question="¿Te interesa esta opción?",
+                pending_question="¿Te gustaría saber más sobre esta propiedad?",
             )
 
         if state.stage == Stage.QUALIFICATION_CASH:
@@ -116,7 +116,7 @@ class StateMachine:
             message="Cuéntame la ciudad o zona que traes en mente y lo retomamos.",
             stage=Stage.DISCOVERY,
             pending_step="discover_location",
-            pending_question="¿Qué ciudad o zona te interesa?",
+            pending_question="¿En qué ciudad estás interesado?",
         )
 
     def _try_location_flow(
@@ -186,13 +186,13 @@ class StateMachine:
 
     def _show_property_plan(self, state: ConversationState) -> ResponsePlan:
         property_item = self.catalog_store.find_by_id(state.selected_property_id)
-        summary = self.catalog_store.public_property_pitch(property_item)
+        summary = self.catalog_store.selected_property_pitch(property_item)
         return self._plan(
             action="show_property",
             message=summary,
             stage=Stage.PROPERTY_ACTIVE,
             pending_step="confirm_property_interest",
-            pending_question="¿Te interesa esta opción?",
+            pending_question="¿Te gustaría saber más sobre esta propiedad?",
         )
 
     def _activate_property(self, state: ConversationState, property_id: str) -> None:
@@ -250,10 +250,10 @@ class StateMachine:
     def _ask_timeline_plan(self) -> ResponsePlan:
         return self._plan(
             action="ask_timeline",
-            message="Solo para que tengas el panorama completo: este tipo de propiedades tienen un proceso y no son de entrega inmediata. ¿Eso se alinea con lo que estás buscando?",
+            message="Genial. Solo para que tengas el panorama completo: este tipo de propiedades tienen un proceso que toma tiempo, no es entrega inmediata. ¿Ese tipo de proceso se alinea con lo que estás buscando?",
             stage=Stage.QUALIFICATION_TIMELINE,
             pending_step="ask_timeline",
-            pending_question="¿Te funciona que no sea entrega inmediata?",
+            pending_question="¿Ese tipo de proceso se alinea con lo que estás buscando?",
         )
 
     def _handle_timeline_stage(self, state: ConversationState, signals: TurnSignals) -> ResponsePlan:
@@ -282,8 +282,7 @@ class StateMachine:
         return self._plan(
             action="ask_product_understanding",
             message=(
-                "Perfecto. En este esquema se adquieren derechos sobre una propiedad en remate; "
-                "no es una compra tradicional con entrega y escrituración inmediata. ¿Lo tienes claro?"
+                "Perfecto. Aquí no se trata de una compra tradicional; se adquieren derechos sobre una propiedad en remate y después sigue un proceso de regularización. ¿Lo tienes claro?"
             ),
             stage=Stage.QUALIFICATION_PRODUCT_UNDERSTANDING,
             pending_step="ask_product",
@@ -465,8 +464,7 @@ class StateMachine:
 
         safe_answers = {
             "timeline": (
-                "Aquí no hay entrega inmediata y el proceso puede extenderse a mediano o largo plazo. "
-                "No manejamos tiempos exactos como compromiso comercial."
+                "Los tiempos pueden variar según cada propiedad. El asesor te puede dar información específica sobre el tiempo estimado en una llamada."
             ),
             "financing": (
                 "Estas oportunidades se manejan solo con recursos propios. "
@@ -474,7 +472,7 @@ class StateMachine:
             ),
             "how_it_works": (
                 "No es una compra tradicional. Aquí se adquieren derechos sobre una propiedad en remate "
-                "y después sigue un proceso de regularización. Por eso no es entrega inmediata."
+                "y después sigue un proceso de regularización, por eso no es entrega inmediata."
             ),
             "first_time": (
                 "No te preocupes, te lo explico paso a paso. Primero ubicamos una oportunidad y luego validamos si este esquema hace sentido para ti."
@@ -493,6 +491,10 @@ class StateMachine:
                 "Si te interesa avanzar, te conecto con un asesor para revisar la opción a detalle y explicarte el siguiente paso."
             ),
         }
+        if objection == "timeline" and current_step == "ask_timeline":
+            resume_question = "¿Ese tipo de proceso se alinea con lo que estás buscando?"
+        if objection == "how_it_works":
+            resume_question = "¿Te funciona un esquema así?"
         message = safe_answers[objection]
         if resume_question:
             message = f"{message} {resume_question}"
@@ -506,12 +508,12 @@ class StateMachine:
 
     def _question_for_step(self, step: Optional[str]) -> Optional[str]:
         mapping = {
-            "discover_location": "¿Qué ciudad o zona te interesa?",
+            "discover_location": "¿En qué ciudad estás interesado?",
             "choose_property": "¿Qué zona te interesa?",
             "alternative_search": "¿Qué alternativa quieres revisar?",
-            "confirm_property_interest": "¿Te interesa esta opción?",
+            "confirm_property_interest": "¿Te gustaría saber más sobre esta propiedad?",
             "ask_cash": "¿Cuentas con recursos propios para invertir?",
-            "ask_timeline": "¿Te funciona que no sea entrega inmediata?",
+            "ask_timeline": "¿Ese tipo de proceso se alinea con lo que estás buscando?",
             "ask_product": "¿Tienes claro que esto es un remate con proceso y no una compra tradicional?",
             "offer_advisor": "¿Te conecto con un asesor?",
             "ask_name": "¿Me compartes tu nombre?",

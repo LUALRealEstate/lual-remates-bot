@@ -18,6 +18,10 @@ def normalize_text(value: str | None) -> str:
 
 
 class CatalogStore:
+    CITY_SHOWCASE_ORDER = {
+        "Tijuana": ["Playas de Tijuana", "Zona Río", "Cacho"],
+        "Ciudad de México": ["Narvarte", "Coyoacán", "Del Valle", "Cuauhtémoc"],
+    }
     CITY_ALIASES = {
         "tijuana": "Tijuana",
         "cdmx": "Ciudad de México",
@@ -115,20 +119,31 @@ class CatalogStore:
         return message
 
     def city_catalog_pitch(self, city: str) -> str:
-        zones = self.city_zones_with_inventory(city)
-        zones_text = self._human_join(zones[:4])
-        return f"Claro, en {city} tenemos opciones en {zones_text}. ¿Hay alguna zona que te interese?"
+        showcase = self.city_showcase(city)[:2]
+        lines = [f"Perfecto, aquí tienes algunas opciones en {city}:"]
+        for index, item in enumerate(showcase, start=1):
+            lines.append(f"{index}. {self._catalog_line(item)}")
+        lines.append("¿Alguna de estas te interesa para que te comparta más detalles?")
+        return "\n\n".join(lines)
 
     def no_inventory_pitch(self, city: str | None, zone: str | None) -> str:
         alternatives = self.alternatives_for(city, zone)
-        alternatives_text = self._human_join(alternatives)
-        if zone:
+        if zone and city:
             return (
                 f"Actualmente no tenemos propiedades disponibles en {zone}, "
-                f"pero sí puedo mostrarte opciones en {alternatives_text}. "
-                "¿Cuál te interesa?"
+                f"pero sí puedo mostrarte opciones en otras zonas de {city}. "
+                "¿Quieres que te enseñe algunas?"
             )
-        return f"Ahorita no tengo inventario exacto en esa búsqueda, pero sí en {alternatives_text}. ¿Cuál te interesa?"
+        alternatives_text = self._human_join(alternatives)
+        return f"Ahorita no tengo inventario exacto en esa búsqueda, pero sí en {alternatives_text}. ¿Quieres que te enseñe algunas?"
+
+    def selected_property_pitch(self, item: PropertyRecord) -> str:
+        return (
+            f"Excelente elección. El {item.tipo.lower()} en {item.zona} tiene "
+            f"{item.recamaras} recámaras, {self._format_bathrooms(item.banos)} y {item.m2}m². "
+            f"Su precio de oportunidad es {item.precio_oportunidad}, con un {item.descuento_estimado} "
+            "de descuento sobre el valor comercial. ¿Te gustaría saber más sobre esta propiedad?"
+        )
 
     def summarize_property(self, item: PropertyRecord) -> str:
         return (
@@ -151,8 +166,16 @@ class CatalogStore:
 
     def _format_bathrooms(self, banos: float) -> str:
         if float(banos).is_integer():
-            return f"{int(banos)} baños"
+            whole = int(banos)
+            if whole == 1:
+                return "1 baño"
+            return f"{whole} baños"
         return f"{banos} baños"
+
+    def city_showcase(self, city: str) -> List[PropertyRecord]:
+        matches = self.search(city=city)
+        priority = {zone: index for index, zone in enumerate(self.CITY_SHOWCASE_ORDER.get(city, []))}
+        return sorted(matches, key=lambda item: (priority.get(item.zona, 999), item.zona, item.id))
 
     def _human_join(self, values: Iterable[str]) -> str:
         items = list(values)
@@ -163,3 +186,10 @@ class CatalogStore:
         if len(items) == 2:
             return f"{items[0]} y {items[1]}"
         return ", ".join(items[:-1]) + f" y {items[-1]}"
+
+    def _catalog_line(self, item: PropertyRecord) -> str:
+        return (
+            f"*{item.zona}*: {item.tipo} de {item.recamaras} recámaras, {self._format_bathrooms(item.banos)}, "
+            f"{item.m2}m². Valor comercial {item.valor_comercial}, oportunidad en {item.precio_oportunidad} "
+            f"({item.descuento_estimado} de descuento)."
+        )
